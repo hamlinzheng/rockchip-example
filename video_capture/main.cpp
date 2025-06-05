@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <cstdlib>
 
 // Build GStreamer pipeline string for V4L2 device
 std::string buildGstreamerPipeline(const std::string& device, int width, int height, int fps) {
@@ -12,6 +13,10 @@ std::string buildGstreamerPipeline(const std::string& device, int width, int hei
 }
 
 int main(int argc, char** argv) {
+    // Set environment variables for RGA hardware acceleration
+    setenv("GST_VIDEO_CONVERT_USE_RGA", "1", 1);
+    setenv("GST_VIDEO_FLIP_USE_RGA", "1", 1);
+
     // Check command line arguments
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <v4l2_device> [width] [height] [fps]" << std::endl;
