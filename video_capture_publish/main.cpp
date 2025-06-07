@@ -14,7 +14,7 @@ std::string buildGstreamerPipeline(const std::string& device, int width, int hei
 
 // Build GStreamer pipeline string for RTSP streaming
 std::string buildRtspOutputPipeline(const std::string& rtspUrl, int width, int height, int fps) {
-    std::string pipeline = "appsrc ! videoconvert ! mpph264enc ! h264parse ! rtspclientsink location=";
+    std::string pipeline = "appsrc ! videoconvert ! video/x-raw, format=I420 ! mpph264enc bps=8000 ! h264parse ! rtspclientsink location=";
     pipeline += rtspUrl;
     return pipeline;
 }
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     std::string rtspUrl = argv[2];
     int width = (argc >= 4) ? std::stoi(argv[3]) : 1280;
     int height = (argc >= 5) ? std::stoi(argv[4]) : 720;
-    int fps = (argc >= 6) ? std::stoi(argv[5]) : 30;
+    int fps = (argc >= 6) ? std::stoi(argv[5]) : 25;
 
     // Build input and output GStreamer pipelines
     std::string inputPipeline = buildGstreamerPipeline(device, width, height, fps);

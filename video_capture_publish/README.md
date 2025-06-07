@@ -42,3 +42,12 @@ make
 - `[width] [height] [fps]`: (optional) video resolution and frame rate, default 1280x720@30
 
 
+## Note
+
+```sh
+## RGA (Raster Graphic Acceleration)
+sudo watch -n 1 cat /sys/kernel/debug/rkrga/load
+
+## MPP (Media Process Platform)
+sudo watch -n 1 cat /proc/mpp_service/sessions-summary
+```
