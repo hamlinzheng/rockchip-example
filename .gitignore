@@ -1,5 +1,18 @@
-# Build folder
-build/
+*.rknn
+*.pt
+*.torchscript
+*.onnx
+*.log
+*.pyc
+*.zip
+*.npy
+*.pkl
+*.pb
+
+# ignore the following folder name
+build
+install
+.vscode/
 
 # Prerequisites
 *.d
@@ -15,7 +28,7 @@ build/
 *.pch
 
 # Compiled Dynamic libraries
-*.so
+# *.so
 *.dylib
 *.dll
 
@@ -26,7 +39,7 @@ build/
 # Compiled Static libraries
 *.lai
 *.la
-*.a
+# *.a
 *.lib
 
 # Executables
