@@ -88,7 +88,7 @@ if [[ -z ${DISABLE_RGA} ]];then
     DISABLE_RGA=OFF
 fi
 
-for demo_path in `find examples -name ${BUILD_DEMO_NAME}`
+for demo_path in `find -name ${BUILD_DEMO_NAME}`
 do
     if [ -d "$demo_path/cpp" ]
     then
@@ -101,7 +101,7 @@ if [[ -z "${BUILD_DEMO_PATH}" ]]
 then
     echo "Cannot find demo: ${BUILD_DEMO_NAME}, only support:"
 
-    for demo_path in `find examples -name cpp`
+    for demo_path in `find -name cpp`
     do
         if [ -d "$demo_path" ]
         then
