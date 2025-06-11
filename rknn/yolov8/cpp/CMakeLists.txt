@@ -65,6 +65,7 @@ endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBRKNNRT_INCLUDES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/allocator/dma
 )
 
 

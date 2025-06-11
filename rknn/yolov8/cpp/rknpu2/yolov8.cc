@@ -21,6 +21,7 @@
 #include "common.h"
 #include "file_utils.h"
 #include "image_utils.h"
+#include "dma_alloc.hpp"
 
 static void dump_tensor_attr(rknn_tensor_attr *attr)
 {
@@ -182,7 +183,17 @@ int inference_yolov8_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
     dst_img.height = app_ctx->model_height;
     dst_img.format = IMAGE_FORMAT_RGB888;
     dst_img.size = get_image_size(&dst_img);
-    dst_img.virt_addr = (unsigned char *)malloc(dst_img.size);
+    // dst_img.virt_addr = (unsigned char *)malloc(dst_img.size);
+    /*
+    * Allocate dma_buf within 4G from dma32_heap,
+    * return dma_fd and virtual address.
+    */
+    ret = dma_buf_alloc(DMA_HEAP_DMA32_UNCACHE_PATCH, dst_img.size, &dst_img.fd, (void **)&dst_img.virt_addr);
+    if (ret < 0) {
+        printf("alloc dma32_heap buffer failed!\n");
+        return -1;
+    }
+    
     if (dst_img.virt_addr == NULL)
     {
         printf("malloc buffer size:%d fail!\n", dst_img.size);
@@ -212,7 +223,7 @@ int inference_yolov8_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
     }
 
     // Run
-    printf("rknn_run\n");
+    // printf("rknn_run\n");
     ret = rknn_run(app_ctx->rknn_ctx, nullptr);
     if (ret < 0)
     {
@@ -243,7 +254,9 @@ int inference_yolov8_model(rknn_app_context_t *app_ctx, image_buffer_t *img, obj
 out:
     if (dst_img.virt_addr != NULL)
     {
-        free(dst_img.virt_addr);
+        // free(dst_img.virt_addr);
+        dma_buf_free(dst_img.size, &dst_img.fd, dst_img.virt_addr);
+        dst_img.virt_addr = NULL;
     }
 
     return ret;
