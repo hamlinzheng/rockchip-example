@@ -86,10 +86,6 @@ void captureThread(FrameQueue& frameQueue, const std::string& gst_pipeline,
         return;
     }
 
-    std::cout << "Camera opened successfully!" << std::endl;
-    std::cout << "Resolution: " << cap.get(cv::CAP_PROP_FRAME_WIDTH) 
-              << "x" << cap.get(cv::CAP_PROP_FRAME_HEIGHT) << std::endl;
-
     cv::Mat frame;
     int frame_count = 0;
     auto last_time = std::chrono::steady_clock::now();
@@ -124,63 +120,6 @@ void captureThread(FrameQueue& frameQueue, const std::string& gst_pipeline,
 
     cap.release();
     std::cout << "Capture thread exiting" << std::endl;
-}
-
-// Display thread function
-void displayThread(FrameQueue& frameQueue, std::atomic<bool>& running, 
-                   std::atomic<int>& capture_fps, std::atomic<int>& display_fps) {
-    std::cout << "Display thread starting..." << std::endl;
-
-    const std::string window_name = "V4L2 Camera Stream";
-    cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE);
-
-    cv::Mat frame;
-    int frame_count = 0;
-    auto last_time = std::chrono::steady_clock::now();
-
-    while (running && frameQueue.is_running()) {
-        if (!frameQueue.pop(frame, 1000)) {
-            if (!running) break;
-            continue;
-        }
-
-        if (frame.empty()) {
-            continue;
-        }
-
-        // Display frame
-        cv::imshow(window_name, frame);
-
-        frame_count++;
-
-        // Calculate display FPS
-        auto current_time = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            current_time - last_time).count();
-        
-        if (elapsed >= 1000) {
-            display_fps = frame_count;
-            frame_count = 0;
-            last_time = current_time;
-            
-            // Print FPS information to console (overwrite previous line)
-            std::cout << "\r[FPS] Capture: " << capture_fps.load() 
-                      << " | Display: " << display_fps.load() 
-                      << " | Queue: " << frameQueue.size() 
-                      << "  " << std::flush;
-        }
-
-        // Check key press
-        int key = cv::waitKey(1);
-        if (key == 'q' || key == 'Q' || key == 27) { // 'q' or ESC key to exit
-            std::cout << "Exit key detected..." << std::endl;
-            running = false;
-            break;
-        }
-    }
-
-    cv::destroyAllWindows();
-    std::cout << "Display thread exiting" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -235,22 +174,60 @@ int main(int argc, char** argv) {
 
     // Wait a moment to ensure capture thread initialization
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-    // Start display thread
-    std::thread display_thread(displayThread, std::ref(frameQueue), 
-                               std::ref(running), std::ref(capture_fps), 
-                               std::ref(display_fps));
-
-    // Wait for threads to finish
-    capture_thread.join();
     
-    // Stop queue and notify display thread to exit
-    frameQueue.stop();
-    display_thread.join();
+    const std::string window_name = "V4L2 Camera Stream";
+    cv::namedWindow(window_name, cv::WINDOW_AUTOSIZE);
 
-    std::cout << std::endl;
-    std::cout << "Program exited normally" << std::endl;
-    std::cout << "========================================" << std::endl;
+    cv::Mat frame;
+    int frame_count = 0;
+    auto last_time = std::chrono::steady_clock::now();
+
+    while (running && frameQueue.is_running()) {
+        if (!frameQueue.pop(frame, 1000)) {
+            if (!running) break;
+            continue;
+        }
+
+        if (frame.empty()) {
+            continue;
+        }
+
+        // Display frame
+        cv::imshow(window_name, frame);
+
+        frame_count++;
+
+        // Calculate display FPS
+        auto current_time = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            current_time - last_time).count();
+        
+        if (elapsed >= 1000) {
+            display_fps = frame_count;
+            frame_count = 0;
+            last_time = current_time;
+            
+            // Print FPS information to console (overwrite previous line)
+            std::cout << "\r[FPS] Capture: " << capture_fps.load() 
+                      << " | Display: " << display_fps.load() 
+                      << " | Queue: " << frameQueue.size() 
+                      << "  " << std::flush;
+        }
+
+        // Check key press
+        int key = cv::waitKey(1);
+        if (key == 'q' || key == 'Q' || key == 27) { // 'q' or ESC key to exit
+            std::cout << std::endl << "Exit key detected..." << std::endl;
+            running = false;
+            break;
+        }
+    }
+
+    cv::destroyAllWindows();
+    
+    // Stop queue and wait for capture thread to finish
+    frameQueue.stop();
+    capture_thread.join();
 
     return 0;
 }
